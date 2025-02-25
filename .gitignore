@@ -1,0 +1,62 @@
+# **1. PyCharmのプロジェクト設定ファイル**
+.idea/
+# → PyCharmのプロジェクト設定（個人環境依存）。チーム開発では不要。
+
+# **2. Python仮想環境**
+venv/
+env/
+# → `venv/` はPython仮想環境のディレクトリ。環境構築は `requirements.txt` で管理する。
+
+# **3. Pythonのキャッシュとコンパイル済みファイル**
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+# → Pythonが自動生成するキャッシュ。Git管理不要。
+
+# **4. 環境変数ファイル（機密情報を含む）**
+.env
+*.env
+# → APIキーやデータベースの認証情報を含む `.env` ファイルをGitに含めない。
+
+# **5. ログファイル**
+*.log
+logs/
+# → ログファイルは不要なので除外。
+
+# **6. Ubuntu特有の不要ファイル**
+.DS_Store
+Thumbs.db
+# → `DS_Store` はmacOSのファイルだが、他のPCで誤って追加されないように含めておく。
+# → `Thumbs.db` はWindows用だが、念のため入れておく。
+
+# **7. SQLiteのローカルデータベース（開発用）**
+*.sqlite3
+db.sqlite3
+# → 開発用のSQLiteデータベースはローカルで管理し、Gitに含めない。
+
+# **8. Jupyter Notebookのキャッシュ（将来的に使う可能性も考慮）**
+.ipynb_checkpoints/
+# → Jupyter Notebookを使った際に自動生成されるキャッシュ。
+
+# **9. VSCode関連（もしVSCodeを併用する場合）**
+.vscode/
+# → VSCodeの設定ファイル。Gitに含める必要なし。
+
+# **10. Docker関連**
+*.dockerfile
+docker-compose.override.yml
+# → Dockerのカスタマイズ設定ファイルをGitに含めない。
+
+# **11. Pythonパッケージのインストールログ**
+pip-log.txt
+pip-delete-this-directory.txt
+# → Pythonのパッケージ関連の一時ファイル。
+
+# **12. pytestやカバレッジツールのキャッシュ**
+htmlcov/
+.coverage
+.nosetests.xml
+pytest_cache/
+# → テストの実行結果をGit管理から除外。
+

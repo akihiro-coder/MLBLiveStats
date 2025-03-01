@@ -1,66 +1,117 @@
-from flask_sqlalchemy import SQLAlchemy
+from mlb_live_stats import db
 
-# SQLAlchemy のインスタンスを作成
-db = SQLAlchemy()
 
-# ✅ チーム情報テーブル
 class Team(db.Model):
-    __tablename__ = 'teams'
-    id = db.Column(db.Integer, primary_key=True)  # 主キー
-    name = db.Column(db.String(100), nullable=False)  # チーム名
-    abbreviation = db.Column(db.String(10), nullable=False)  # チーム略称
-    league = db.Column(db.String(20), nullable=False)  # 所属リーグ
+    __tablename__ = 'team'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False, unique=True)
 
-    # 1対多: 1チームは複数の試合に出場
-    home_games = db.relationship('Game', back_populates='home_team_rel', foreign_keys='Game.home_team_id')
-    away_games = db.relationship('Game', back_populates='away_team_rel', foreign_keys='Game.away_team_id')
+    # GameTeamとのリレーション（試合ごとのチーム情報）
+    games = db.relationship('GameTeam', back_populates='team')
 
-# ✅ 試合情報テーブル
+    # Playerとのリレーション（チームの選手）
+    players = db.relationship('Player', back_populates='team')
+
+
 class Game(db.Model):
-    __tablename__ = 'games'
-    id = db.Column(db.Integer, primary_key=True)  # 主キー
-    game_date = db.Column(db.DateTime, nullable=False)  # 試合日
-    home_team_id = db.Column(db.Integer, db.ForeignKey('teams.id', ondelete='SET NULL'), nullable=True)  # ホームチーム
-    away_team_id = db.Column(db.Integer, db.ForeignKey('teams.id', ondelete='SET NULL'), nullable=True)  # アウェイチーム
-    home_score = db.Column(db.Integer, nullable=True)  # ホームチームの得点
-    away_score = db.Column(db.Integer, nullable=True)  # アウェイチームの得点
-    status = db.Column(db.String(20), nullable=False)  # 試合状況（予定・進行中・終了など）
+    __tablename__ = 'game'
+    id = db.Column(db.Integer, primary_key=True)
+    date = db.Column(db.DateTime, nullable=False)
+    venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
 
-    # リレーション
-    home_team_rel = db.relationship('Team', foreign_keys=[home_team_id])
-    away_team_rel = db.relationship('Team', foreign_keys=[away_team_id])
-    plays = db.relationship('Play', back_populates='game')  # 試合に紐づくプレー
+    # Venueとのリレーション
+    venue = db.relationship('Venue', back_populates='games')
 
-# ✅ 選手情報テーブル
+    # GameTeamとのリレーション（試合ごとのチーム情報）
+    teams = db.relationship('GameTeam', back_populates='game')
+
+    # Pointとのリレーション（イニングごとの得点）
+    points = db.relationship('Point', back_populates='game')
+
+    # PlayerStatsとのリレーション（試合ごとの選手成績）
+    player_stats = db.relationship('PlayerStats', back_populates='game')
+
+    # GameTeamStatsとのリレーション（試合ごとのチーム成績）
+    team_stats = db.relationship('GameTeamStats', back_populates='game')
+
+
+class GameTeam(db.Model):
+    __tablename__ = 'game_team'
+    id = db.Column(db.Integer, primary_key=True)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
+    is_home_team = db.Column(db.Boolean, nullable=False)
+
+    # Teamとのリレーション
+    team = db.relationship('Team', back_populates='games')
+
+    # Gameとのリレーション
+    game = db.relationship('Game', back_populates='teams')
+
+
+class Venue(db.Model):
+    __tablename__ = 'venue'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    location = db.Column(db.String, nullable=False)
+
+    # Gameとのリレーション
+    games = db.relationship('Game', back_populates='venue')
+
+
+class Point(db.Model):
+    __tablename__ = 'point'
+    id = db.Column(db.Integer, primary_key=True)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    inning_number = db.Column(db.Integer, nullable=False)
+    runs = db.Column(db.Integer, nullable=False)
+
+    # Gameとのリレーション
+    game = db.relationship('Game', back_populates='points')
+
+    # Teamとのリレーション
+    team = db.relationship('Team')
+
+
 class Player(db.Model):
-    __tablename__ = 'players'
-    id = db.Column(db.Integer, primary_key=True)  # 主キー
-    name = db.Column(db.String(100), nullable=False)  # 選手名
-    team_id = db.Column(db.Integer, db.ForeignKey('teams.id', ondelete='SET NULL'), nullable=True)  # 所属チーム
-    position = db.Column(db.String(50), nullable=False)  # ポジション
+    __tablename__ = 'player'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String, nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
 
-    team = db.relationship('Team')  # チームとのリレーション
+    # Teamとのリレーション
+    team = db.relationship('Team', back_populates='players')
 
-# ✅ 試合中のプレーデータテーブル
-class Play(db.Model):
-    __tablename__ = 'plays'
-    id = db.Column(db.Integer, primary_key=True)  # 主キー
-    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)  # 試合ID
-    inning = db.Column(db.Integer, nullable=False)  # 何回のプレーか
-    description = db.Column(db.String(255), nullable=False)  # プレーの詳細
-    is_scoring_play = db.Column(db.Boolean, default=False)  # 得点プレーかどうか
+    # PlayerStatsとのリレーション
+    stats = db.relationship('PlayerStats', back_populates='player')
 
-    game = db.relationship('Game', back_populates='plays')  # 試合とのリレーション
 
-# ✅ 選手の試合ごとの成績テーブル
 class PlayerStats(db.Model):
     __tablename__ = 'player_stats'
-    id = db.Column(db.Integer, primary_key=True)  # 主キー
-    player_id = db.Column(db.Integer, db.ForeignKey('players.id'), nullable=False)  # 選手ID
-    game_id = db.Column(db.Integer, db.ForeignKey('games.id'), nullable=False)  # 試合ID
-    batting_avg = db.Column(db.Float, nullable=True)  # 打率
-    home_runs = db.Column(db.Integer, nullable=True)  # 本塁打
-    era = db.Column(db.Float, nullable=True)  # 防御率（投手用）
+    id = db.Column(db.Integer, primary_key=True)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
+    player_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=False)
+    num_pitches = db.Column(db.Integer, nullable=False)
+    num_strikeouts = db.Column(db.Integer, nullable=False)
 
-    player = db.relationship('Player')  # 選手とのリレーション
-    game = db.relationship('Game')  # 試合とのリレーション
+    # Gameとのリレーション
+    game = db.relationship('Game', back_populates='player_stats')
+
+    # Playerとのリレーション
+    player = db.relationship('Player', back_populates='stats')
+
+
+class GameTeamStats(db.Model):
+    __tablename__ = 'game_team_stats'
+    id = db.Column(db.Integer, primary_key=True)
+    game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
+    team_id = db.Column(db.Integer, db.ForeignKey('team.id'), nullable=False)
+    num_hits = db.Column(db.Integer, nullable=False)
+    num_errors = db.Column(db.Integer, nullable=False)
+
+    # Gameとのリレーション
+    game = db.relationship('Game', back_populates='team_stats')
+
+    # Teamとのリレーション
+    team = db.relationship('Team')

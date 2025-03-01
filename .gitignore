@@ -33,6 +33,7 @@ Thumbs.db
 # **7. SQLiteのローカルデータベース（開発用）**
 *.sqlite3
 db.sqlite3
+instance/
 # → 開発用のSQLiteデータベースはローカルで管理し、Gitに含めない。
 
 # **8. Jupyter Notebookのキャッシュ（将来的に使う可能性も考慮）**

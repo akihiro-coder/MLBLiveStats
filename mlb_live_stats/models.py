@@ -18,6 +18,7 @@ class Game(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     date = db.Column(db.DateTime, nullable=False)
     venue_id = db.Column(db.Integer, db.ForeignKey('venue.id'), nullable=False)
+    status = db.Column(db.String, nullable=False)
 
     # Venueとのリレーション
     venue = db.relationship('Venue', back_populates='games')
@@ -92,8 +93,14 @@ class PlayerStats(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     game_id = db.Column(db.Integer, db.ForeignKey('game.id'), nullable=False)
     player_id = db.Column(db.Integer, db.ForeignKey('player.id'), nullable=False)
-    num_pitches = db.Column(db.Integer, nullable=False)
-    num_strikeouts = db.Column(db.Integer, nullable=False)
+
+    # ピッチャー成績
+    num_pitches = db.Column(db.Integer)
+    num_strikeouts = db.Column(db.Integer)
+
+    # バッター成績
+    batting_avg = db.Column(db.Float)
+    rbi = db.Column(db.Integer)
 
     # Gameとのリレーション
     game = db.relationship('Game', back_populates='player_stats')

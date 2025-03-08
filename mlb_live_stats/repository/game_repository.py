@@ -26,7 +26,12 @@ def save_game(game_id, date, venue_id):
     :param venue_id: 球場ID
     :return: None
     """
-    game = Game(id=game_id, date=date, venue_id=venue_id)
+    game = Game.query.get(game_id)
+    if not game:
+        game = Game(game_id=game_id, date=date, venue_id=venue_id)
+    else:
+        game.date = date
+        game.venue_id = venue_id
     db.session.merge(game)
     db.session.commit()
 
